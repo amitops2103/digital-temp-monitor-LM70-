@@ -51,7 +51,7 @@ initial begin
   ena = 1'b1;
   #10;
     rst_n = 1'b1;
-  #150;
+  #700;
   $finish(2);   
 end
 
