@@ -1,4 +1,4 @@
-//------Digital Temperature Monitor Template-----
+//------Digital Temperature Monitor Template----
 /*
  * Copyright (c) 2025 Silicon University, Odisha, India
  */
