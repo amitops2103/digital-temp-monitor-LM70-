@@ -32,10 +32,10 @@ module digital_temp_monitor_top (
   // The enables may not be auto checked. 
   assign uio_oe  = 8'b00111011;// From Tiny-Tapeout
   assign uio_out[7:6] = 2'b00;
-  assign uio_out[2] = 1'b0;wire sel_disp_mode = ui_in[0]; // 0 -> normal temperature, 1 -> show C or F
+  assign uio_out[2] = 1'b0;
 
 // === INPUT CONTROL ===
-  wire  sel_ob_LSB;
+  wire sel_ob_LSB;
   wire sel_CorF;
   wire sel_disp_mode;
   assign sel_disp_mode = ui_in[0]; // 0 -> normal temperature, 1 -> show C or F
@@ -68,7 +68,7 @@ always @(posedge clk or negedge rst_n) begin
        	if (!rst_n)
 		spi_state <= `SPI_IDLE;
 	else begin
-		case (count)
+		case (cnt)
 			`CS_LOW_COUNT:     spi_state <= `SPI_READ;
 			`CS_HIGH_COUNT:    spi_state <= `SPI_IDLE;
 			`SPI_LATCH_COUNT:  spi_state <= `SPI_LATCH;
@@ -104,17 +104,19 @@ end
 reg [7:0] temp_msb;
 reg [7:0] temp_C;
 always @(posedge clk or negedge rst_n) begin
-	if(!rstn) begin
+	if(!rst_n) begin
 		temp_msb <= 8'h00;
 	       	temp_C   <= 8'h00;
 	end
-	else if (count == `SPI_LATCH_COUNT) begin
+	else if (cnt == `SPI_LATCH_COUNT) begin
 		temp_msb <= shift_reg;
 		temp_C   <= shift_reg <<< 1; // Multiply by 2: LSB becomes 2°C
 	end
 end
 
 // === C to F Conversion ===
+// temp(F) = 2*C + 32  (Accurate: 9*C/5 +32)
+// Error % is 0.62% at 0C and 9.43% at 100C
 wire [7:0] temp_F;
 assign temp_F = (temp_C << 1) + 8'd32;
 
@@ -123,13 +125,20 @@ wire [7:0] temp_select;
 assign temp_select = sel_CorF ? temp_F : temp_C;
 
 // ===== BCD conversion =====
-wire [3:0] tens = temp_select / 10;
-wire [3:0] ones = temp_select % 10;
+wire [3:0] bcd_msb;
+wire [3:0] bcd_lsb;
+wire       bcd_lsb_carry;
+//Temp/10 approx. 1/16 + 1/32
+assign bcd_msb = (temp_selected + (temp_selected >> 1)) >> 4;
+//LSB = temp - 10*MSB = temp - (8*MSB + 2*MSB)
+assign bcd_lsb = temp_selected - ((bcd_msb << 3) + (bcd_msb << 1));
+// Capturing overflow bit
+assign bcd_lsb_carry = bcd_lsb > 4'd9;
 
 // === MUX: Select between MSB (tens) and LSB (ones) ===
 wire [3:0] bcd_data;
 
-assign bcd_data = sel_ob_LSB ? ones : tens; // MUX logic
+assign bcd_data = sel_ob_LSB ? bcd_lsb : bcd_msb; // MUX logic
 
 // === C and F 7-segment codes ===
 wire [7:0] char_C;
