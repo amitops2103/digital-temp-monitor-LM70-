@@ -1,9 +1,6 @@
 `timescale 1ns/1ns
 
-module tb ();
-
-
-  // Wire up the inputs and outputs:
+module tb ()
   reg clk;
   reg rst_n;
   reg ena;
@@ -37,7 +34,9 @@ LM07 tsense(.TEMP_SET(TEMP_SET),.CS(CS), .SCK(SCK), .SIO(SIO));
 assign CS = uio_out[0];
 assign SCK = uio_out[1];
 //uio_in[2] is reg so cannot be 'assigned'
-always @(*) begin uio_in[2] <= SIO; end
+always @(*) begin
+       	uio_in[2] <= SIO;
+end
 
 //********INITIALS****************
 //Initialize CS
@@ -62,6 +61,9 @@ initial forever #10 clk = ~clk;
 endmodule
 // end tb
 
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------------//
 ///////TEMP SENSOR LM70 DUMMY MODEL/////////////////
 //Define
 // In this design we only read the 8-MSBs 
