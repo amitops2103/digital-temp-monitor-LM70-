@@ -1,0 +1,8 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1749373581" />
+    <testcase name="temp_monitor" classname="tb_cocotb" file="/home/amitvlsi01/git_repo/digital-temp-monitor-LM70-/test/tb_cocotb.py" lineno="55" time="14.924811840057373" sim_time_ns="1651000.001" ratio_time="110621.16016557119">
+      <failure message="Test failed with RANDOM_SEED=1749373581" />
+    </testcase>
+  </testsuite>
+</testsuites>

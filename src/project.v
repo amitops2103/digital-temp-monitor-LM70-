@@ -65,7 +65,7 @@ end
 
 // === STATE MACHINE ===
 always @(posedge clk or negedge rst_n) begin
-       	if (!rst_n)
+        if (!rst_n)
 		spi_state <= `SPI_IDLE;
 	else begin
 		case (cnt)
@@ -106,7 +106,7 @@ reg [7:0] temp_C;
 always @(posedge clk or negedge rst_n) begin
 	if(!rst_n) begin
 		temp_msb <= 8'h00;
-	       	temp_C   <= 8'h00;
+		temp_C   <= 8'h00;
 	end
 	else if (cnt == `SPI_LATCH_COUNT) begin
 		temp_msb <= shift_reg;
@@ -129,9 +129,9 @@ wire [3:0] bcd_msb;
 wire [3:0] bcd_lsb;
 wire       bcd_lsb_carry;
 //Temp/10 approx. 1/16 + 1/32
-assign bcd_msb = (temp_selected + (temp_selected >> 1)) >> 4;
+assign bcd_msb = (temp_select + (temp_select >> 1)) >> 4;
 //LSB = temp - 10*MSB = temp - (8*MSB + 2*MSB)
-assign bcd_lsb = temp_selected - ((bcd_msb << 3) + (bcd_msb << 1));
+assign bcd_lsb = temp_select - ((bcd_msb << 3) + (bcd_msb << 1));
 // Capturing overflow bit
 assign bcd_lsb_carry = bcd_lsb > 4'd9;
 
