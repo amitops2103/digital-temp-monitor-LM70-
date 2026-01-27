@@ -2,7 +2,6 @@
 
 module tb ();
 
-
   // Wire up the inputs and outputs:
   reg clk;
   reg rst_n;
@@ -31,13 +30,17 @@ digital_temp_monitor_top  dut(
   );
 
 //Instiate Temperature Sensor LM07
-LM07 tsense(.TEMP_SET(TEMP_SET),.CS(CS), .SCK(SCK), .SIO(SIO));
+LM70 tsense(.TEMP_SET(TEMP_SET),.CS(CS), .SCK(SCK), .SIO(SIO));
 
 //DUT <-> LM07 Connections
 assign CS = uio_out[0];
 assign SCK = uio_out[1];
+
 //uio_in[2] is reg so cannot be 'assigned'
-always @(*) begin uio_in[2] <= SIO; end
+always @(*)
+begin
+	uio_in[2] <= SIO;
+end
 
 //********INITIALS****************
 //Initialize CS
@@ -45,6 +48,7 @@ always @(*) begin uio_in[2] <= SIO; end
 initial begin
   $dumpfile("tb.vcd");
   $dumpvars(0, tb);
+
   rst_n = 1'b0;
   ui_in = 8'h02;
   TEMP_SET = -25;
@@ -55,7 +59,6 @@ initial begin
   #1450;
   $finish(2);   
 end
-
 
 //Generate test clock
 initial forever #10 clk = ~clk;    
@@ -70,46 +73,48 @@ endmodule
     
 ////////////////////////////////////////////////////////////////////////////
 // Verilog model for the SPI-based temperature 
-// sensor LM07 or it's equivalent family.
-//
-module LM07(TEMP_SET,CS, SCK, SIO);
+// sensor LM70 or it's equivalent family.
+
+module LM70(TEMP_SET,CS, SCK, SIO);
   output SIO;
   input SCK, CS;
   input real TEMP_SET; //Real raw temprature input
   reg [15:0] TEMP; // LM70 formatted 16-bit data
   
-  // lm07_reg represents the register that stores
-  // temperature value after A2D conversion
-  // FIXME: Model the A2D
+// lm07_reg represents the register that stores
+// temperature value after A2D conversion
+// FIXME: Model the A2D
+
   reg [15:0] shift_reg;
   wire clk_gated;
   
   //Reset at startup
   initial begin
-    shift_reg = TEMP; 
-    //shift_reg = shift_reg>>1;
+    shift_reg = TEMP; //shift_reg = shift_reg>>1;
   end
   
   //PTAT temp conversion to voltage
   real voltage;
   reg [63:0] voltage_bits;
   always @(*)
-    begin
-  voltage =(((1.8/180.0)*TEMP_SET) + (99.0/180.0));
-  voltage_bits = $realtobits(voltage);
-    end
+  begin
+	    voltage =(((1.8/180.0)*TEMP_SET) + (99.0/180.0));
+	    voltage_bits = $realtobits(voltage);
+  end
   
   //ADC
   real volt;
   integer temp_r;
+
   always @(*)
-    begin
-  volt = $bitstoreal(voltage_bits);
-  temp_r = ((180.0/1.8)*volt) - (99.0/1.8);
-    end
+  begin
+	    volt = $bitstoreal(voltage_bits);
+	    temp_r = ((180.0/1.8)*volt) - (99.0/1.8);
+  end
   
   reg signed [10:0] temp_code;      // 11-bit signed temperature code
-  always @(*) begin
+  always @(*)
+  begin
   // Step 1: Convert °C to LM70 digital code
   // LM70 resolution = 0.25 °C → multiply by 4
      temp_code = temp_r * 4;
@@ -126,8 +131,7 @@ module LM07(TEMP_SET,CS, SCK, SIO);
   // If high, reset
   always @(CS)
    begin
-     shift_reg = TEMP;
-     //shift_reg = shift_reg>>1;
+     shift_reg = TEMP;  //shift_reg = shift_reg>>1;
    end
   
   //Shift register to shift the loaded temp reg
